@@ -5,14 +5,13 @@ from flask import jsonify
 import os
 import logging
 
-logging.basicConfig(level=logging.INFO)
-
 port = int(os.environ.get('PORT', 5000))
 #logging.info('Listening on port {0}'.format(port))
 debug = os.environ.get('DEBUG', 'False') == 'True'
 
 if debug:
     logging.basicConfig(level=logging.DEBUG)
+    logging.info('Set log level to {0}'.format(logging.getLevelName(logging.getLogger(__name__).getEffectiveLevel())))
 
 app = Flask(__name__)
 
