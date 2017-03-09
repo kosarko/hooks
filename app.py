@@ -3,8 +3,12 @@ from flask import request
 from flask import jsonify
 
 import os
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 port = os.environ.get('PORT', 5000)
+logging.info('Listening on port {0}'.format(port))
 debug = os.environ.get('DEBUG', False)
 
 app = Flask(__name__)
