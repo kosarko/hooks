@@ -27,6 +27,7 @@ def index():
 def payload():
     signature = 'sha1=' + HMAC(secret, msg=request.get_data()).hexdigest()
     if not compare_digest(signature, request.headers.get('X-Hub-Signature', default='')):
+        logging.debug(signature)
         return "Signatures didn't match!", 500
     json_in = request.get_json()
     logging.debug(json_in)
