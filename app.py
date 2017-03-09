@@ -11,7 +11,7 @@ import logging
 port = int(os.environ.get('PORT', 5000))
 #logging.info('Listening on port {0}'.format(port))
 debug = os.environ.get('DEBUG', 'False') == 'True'
-secret = os.environ.get('SECRET')
+secret = os.environ.get('SECRET').encode('utf8')
 
 if debug:
     logging.basicConfig(level=logging.DEBUG)
@@ -26,7 +26,7 @@ def index():
 @app.route('/payload', methods=['POST'])
 def payload():
     signature = 'sha1=' + HMAC(secret, msg=request.get_data()).hexdigest()
-    if not compare_digest(signature, request.headers['X-Hub-Signature']):
+    if not compare_digest(signature, request.headers.get('X-Hub-Signature', default='')):
         return "Signatures didn't match!", 500
     json_in = request.get_json()
     logging.debug(json_in)
