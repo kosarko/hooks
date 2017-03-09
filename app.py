@@ -4,6 +4,7 @@ from flask import jsonify
 
 from hmac import HMAC
 from hmac import compare_digest
+import hashlib
 
 import os
 import logging
@@ -25,7 +26,7 @@ def index():
 
 @app.route('/payload', methods=['POST'])
 def payload():
-    signature = 'sha1=' + HMAC(secret, msg=request.get_data()).hexdigest()
+    signature = 'sha1=' + HMAC(secret, msg=request.get_data(), digestmod=hashlib.sha1).hexdigest()
     if not compare_digest(signature, request.headers.get('X-Hub-Signature', default='')):
         logging.debug(signature)
         return "Signatures didn't match!", 500
