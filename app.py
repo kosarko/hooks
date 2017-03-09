@@ -3,12 +3,12 @@ from flask import request
 from flask import jsonify
 
 import os
-import logging
+#import logging
 
-logging.basicConfig(level=logging.INFO)
+#logging.basicConfig(level=logging.INFO)
 
 port = os.environ.get('PORT', 5000)
-logging.info('Listening on port {0}'.format(port))
+#logging.info('Listening on port {0}'.format(port))
 debug = os.environ.get('DEBUG', False)
 
 app = Flask(__name__)
@@ -23,4 +23,4 @@ def payload():
     return jsonify(json_in)
 
 if __name__ == '__main__':
-    app.run(debug=debug, port=port)
+    app.run(host='0.0.0.0', debug=debug, port=port)
