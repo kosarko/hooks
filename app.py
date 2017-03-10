@@ -1,10 +1,12 @@
 from flask import Flask
 from flask import request
-from flask import jsonify
+#from flask import jsonify
 
 from hmac import HMAC
 from hmac import compare_digest
 import hashlib
+
+import requests
 
 import os
 import logging
@@ -13,6 +15,7 @@ port = int(os.environ.get('PORT', 5000))
 #logging.info('Listening on port {0}'.format(port))
 debug = os.environ.get('DEBUG', 'False') == 'True'
 secret = os.environ.get('SECRET').encode('utf8')
+headers = {'Authorization': 'token ' + os.environ.get('GITHUB_API_KEY')}
 
 if debug:
     logging.basicConfig(level=logging.DEBUG)
@@ -20,9 +23,28 @@ if debug:
 
 app = Flask(__name__)
 
+
 @app.route('/', methods=['GET'])
 def index():
     return "Hello, World!"
+
+
+def add_label(issue_url, label):
+    r = requests.post(issue_url + '/labels', json=[label], headers=headers)
+    logging.debug(r)
+    return "Got {}".format(r.status_code), r.status_code
+
+
+def process_merged_pr(payload):
+    action = payload.get('action', None)
+    pull_request = payload.get('pull_request', None)
+    if pull_request and action == 'closed' and pull_request.merged:
+        url = pull_request['url']
+        label = 'Merged in dev'
+        add_label(url, label)
+    else:
+        pass
+
 
 @app.route('/payload', methods=['POST'])
 def payload():
@@ -32,7 +54,7 @@ def payload():
         return "Signatures didn't match!", 500
     json_in = request.get_json()
     logging.debug(json_in)
-    return jsonify(json_in)
+    return process_merged_pr(json_in)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=debug, port=port)
