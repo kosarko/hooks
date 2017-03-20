@@ -2,6 +2,8 @@ from flask import Flask
 from flask import request
 #from flask import jsonify
 
+import json;
+
 from hmac import HMAC
 from hmac import compare_digest
 import hashlib
@@ -38,7 +40,7 @@ def add_label(issue_url, label):
 def process_merged_pr(json_payload):
     action = json_payload.get('action', None)
     pull_request = json_payload.get('pull_request', None)
-    logging.debug('pull_request=' + pull_request)
+    logging.debug('pull_request=' + json.dumps(pull_request))
     if pull_request and action == 'closed' and pull_request.merged:
         url = pull_request['url']
         label = 'Merged in dev'
