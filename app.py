@@ -19,6 +19,7 @@ port = int(os.environ.get('PORT', 5000))
 debug = os.environ.get('DEBUG', 'False') == 'True'
 secret = os.environ.get('SECRET').encode('utf8')
 headers = {'Authorization': 'token ' + os.environ.get('GITHUB_API_KEY')}
+dev_branch_name = os.environ.get('DEV_BRANCH_NAME')
 
 if debug:
     logging.basicConfig(level=logging.DEBUG)
@@ -42,7 +43,8 @@ def process_merged_pr(json_payload):
     action = json_payload.get('action', None)
     pull_request = json_payload.get('pull_request', None)
     logging.debug('pull_request=' + json.dumps(pull_request))
-    if pull_request and action == 'closed' and pull_request['merged']:
+    if pull_request and action == 'closed' and\
+            pull_request['merged'] and pull_request['base']['label'] == dev_branch_name:
         url = pull_request['issue_url']
         label = 'Merged in dev'
         return add_label(url, label)
@@ -52,10 +54,15 @@ def process_merged_pr(json_payload):
 
 @app.route('/payload', methods=['POST'])
 def payload():
+    if 'pull_request' != request.headers.get('X-GitHub-Event', default=''):
+        logging.debug(request.headers.get('X-GitHub-Event'))
+        return "Wrong event type!", 500
+
     signature = 'sha1=' + HMAC(secret, msg=request.get_data(), digestmod=hashlib.sha1).hexdigest()
     if not compare_digest(signature, request.headers.get('X-Hub-Signature', default='')):
         logging.debug(signature)
         return "Signatures didn't match!", 500
+
     json_in = request.get_json()
     logging.debug(json_in)
     return process_merged_pr(json_in)
