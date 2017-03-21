@@ -2,7 +2,8 @@ from flask import Flask
 from flask import request
 #from flask import jsonify
 
-import json;
+import json
+from pprint import pformat
 
 from hmac import HMAC
 from hmac import compare_digest
@@ -33,7 +34,7 @@ def index():
 
 def add_label(issue_url, label):
     r = requests.post(issue_url + '/labels', json=[label], headers=headers)
-    logging.debug(r)
+    logging.debug(pformat(r))
     return "Got {}".format(r.status_code), r.status_code
 
 
