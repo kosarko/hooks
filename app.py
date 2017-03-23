@@ -13,6 +13,7 @@ import requests
 
 import os
 import logging
+from time import sleep
 
 port = int(os.environ.get('PORT', 5000))
 #logging.info('Listening on port {0}'.format(port))
@@ -47,6 +48,8 @@ def process_merged_pr(json_payload):
             pull_request['merged'] and pull_request['base']['label'] == dev_branch_name:
         url = pull_request['issue_url']
         label = 'Merged in dev'
+        #naive wait for other hooks to do their stuff
+        sleep(5)
         return add_label(url, label)
     else:
         return "Doing nothing"
