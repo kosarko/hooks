@@ -13,6 +13,7 @@ import requests
 
 import os
 import logging
+import re
 from time import sleep
 
 port = int(os.environ.get('PORT', 5000))
@@ -34,10 +35,16 @@ def index():
     return "Hello, World!"
 
 
-def add_label(issue_url, label):
-    r = requests.post(issue_url + '/labels', json=[label], headers=headers)
-    logging.debug(pformat(r))
-    return "Got {}".format(r.status_code), r.status_code
+def add_label(*args, **kwargs):
+    response = ""
+    status = 0
+    for issue_url in args:
+        if issue_url:
+            r = requests.post(issue_url + '/labels', json=[kwargs['label']], headers=headers)
+            logging.debug(pformat(r))
+            response += "{}: Got {}".format(issue_url, r.status_code)
+            status = r.status_code if r.status_code > status else status
+    return response, r.status_code
 
 
 def process_merged_pr(json_payload):
@@ -46,11 +53,17 @@ def process_merged_pr(json_payload):
     logging.debug('pull_request=' + json.dumps(pull_request))
     if pull_request and action == 'closed' and\
             pull_request['merged'] and pull_request['base']['label'] == dev_branch_name:
-        url = pull_request['issue_url']
+        pull_request_url = pull_request['issue_url']
+        #assume the pr branch name has an issue number assigned...like issue_#123
+        assigned_issue_url = None
+        m = re.search('\D*#(\d+)\D*', pull_request['head']['ref'])
+        if m:
+            issues_url = json_payload.get('repository')['issues_url']
+            assigned_issue_url = issues_url.format(**{'/number': '/' + m.group(1)})
         label = 'Merged in dev'
         #naive wait for other hooks to do their stuff
         sleep(5)
-        return add_label(url, label)
+        return add_label(pull_request_url, assigned_issue_url, label=label)
     else:
         return "Doing nothing"
 
